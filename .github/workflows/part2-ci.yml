@@ -13,12 +13,12 @@ jobs:
 
       - name: Validate repository structure
         run: |
-          test -n "$(find Part2-API -maxdepth 1 -name '*.sln*')"
-          test -f Part2-API/RaceDay.Api/RaceDay.Api.csproj
-          test -f Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
-          test -d Part2-API/RaceDay.Api/Controllers
-          test -d Part2-API/RaceDay.Api/Models
-          test -d Part2-API/RaceDay.Api/Migrations
+          test -f RaceDay.API.slnx
+          test -f RaceDay.API/RaceDay.Api.csproj
+          test -f RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
+          test -d RaceDay.API/Controllers
+          test -d RaceDay.API/Models
+          test -d RaceDay.API/Migrations
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
@@ -26,10 +26,10 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
+        run: dotnet restore RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
 
       - name: Build
-        run: dotnet build Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-restore --configuration Release
+        run: dotnet build RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-restore --configuration Release
 
       - name: Run unit tests
-        run: dotnet test Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-build --configuration Release --verbosity normal
+        run: dotnet test RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-build --configuration Release --verbosity normal
