@@ -1,0 +1,35 @@
+name: Part 2 API CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Validate repository structure
+        run: |
+          test -n "$(find Part2-API -maxdepth 1 -name '*.sln*')"
+          test -f Part2-API/RaceDay.Api/RaceDay.Api.csproj
+          test -f Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
+          test -d Part2-API/RaceDay.Api/Controllers
+          test -d Part2-API/RaceDay.Api/Models
+          test -d Part2-API/RaceDay.Api/Migrations
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
+
+      - name: Build
+        run: dotnet build Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test Part2-API/RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-build --configuration Release --verbosity normal
