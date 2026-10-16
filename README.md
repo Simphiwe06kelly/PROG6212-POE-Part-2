@@ -230,6 +230,50 @@ All endpoints are visible and testable in Swagger, each with a description, expe
 | DELETE | `/api/enrolments/{id}` | Participant (owner) | Cancel own enrolment |
 
 ### Results
+|Method | Route	| Role	| Purpose |
+|---|---|---|---|
+| POST |`api/results` |	Organiser (owner) | Capture a result |
+|PUT | `api/results/{id}` | Organiser (owner) | Correct a result |
+|GET | `api/events/{eventId}/results` |	Public | Event leaderboard|
+|GET | `api/results/mine` |	Participant	(Owner) | results |
+
+## Swagger
+
+Swagger UI is available at `/swagger` when the API runs in the Development environment. Endpoint descriptions come from the XML comments on each controller action (`GenerateDocumentationFile` is enabled in the project file). Each endpoint shows its purpose, the data it expects and the responses it can return.
+
+## Unit tests
+
+There are **75 tests**, all passing locally and in GitHub Actions. They start the real API in memory using `WebApplicationFactory` and the EF Core InMemory provider. Every test registers its own users and uses its own cookie session, so tests do not depend on each other.
+
+| Test file | What it covers |
+|---|---|
+| `AuthTests.cs` | Registration success and failure (duplicate email, invalid role, missing fields), password hashing, login success and failure, session lifetime and logout |
+| `EventTests.cs` | Create, read, update and delete events, ownership checks, validation, adding categories |
+| `RoleAccessTests.cs` | Organiser-only endpoints reject Participants, Participant-only endpoints reject Organisers, every protected endpoint rejects anonymous callers, public endpoints work without login |
+| `EnrolmentTests.cs` | Enrolling and the enrolment being recorded, duplicate enrolment, unknown category, full category, past events, cancelling and re-enrolling, rosters, capturing and viewing results |
+
+### CI workflow
+
+`.github/workflows/part2-ci.yml` runs on every push and pull request. It:
+
+1. Checks that the expected solution, projects and folders exist
+2. Sets up .NET 10
+3. Restores and builds the solution
+4. Runs all unit tests
+
+## Differences from the Part 1 plan
+
+The API follows the Part 1 endpoint plan, with these deliberate changes:
+
+| Part 1 plan | What was built | Why |
+|---|---|---|
+| Login returns a JWT: `{ token, role, userId }` | Login starts a server-side session and returns `{ userId, role, message }` | The Part 2 brief asks for session management with the user's ID and role held server-side |
+| No logout endpoint | Added `POST /api/auth/logout` | Needed to end a session and to test switching roles |
+| Deleting an enrolment | The enrolment is kept and its status is set to `Cancelled`; enrolling again re-activates it | Keeps history, and works with the unique participant + category constraint from the ERD |
+| Enrolling only needs a valid category | Enrolling also rejects full categories and events that have already taken place | Enforces `MaxParticipants` and prevents enrolling in past events |
+| Deleting events and categories | Rejected with `409` if they already have enrolments | Protects enrolment and result data |
+| `POST /api/results` listed without `403` | Returns `403` if the Organiser does not own the event | Organisers should only capture results for their own events |
+| `GET /api/events` returns "upcoming events" | Returns events dated today or later, soonest first | Matches the plan; past events are still available by ID |
 
 | Method | Route | Role | Purpose |
 |---|---|---|---|
