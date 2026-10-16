@@ -14,7 +14,8 @@ The code for this part lives in the [`Part2-API`](Part2-API) folder.
 
 The GitHub Actions workflow builds the project and runs all unit tests on every push.
 
-![Green build](docs/ci-green-build.png)
+![Green build]<img width="698" height="47" alt="image" src="https://github.com/user-attachments/assets/a8ca5849-be3f-4b5d-a098-04dfd7b5c230" />
+
 
 ## Table of contents
 
