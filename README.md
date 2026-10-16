@@ -8,7 +8,8 @@ The code for this part lives in the [`Part2-API`](Part2-API) folder.
 
 ## Video demonstration
 
-[Watch the demo on YouTube (unlisted)](PASTE-YOUR-YOUTUBE-LINK-HERE)
+[Watch the demo on YouTube (unlisted)]
+    https://youtu.be/YLs8fmIuQgY
 
 ## CI/CD status
 
