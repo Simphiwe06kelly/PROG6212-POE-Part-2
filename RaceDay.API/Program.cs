@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RaceDay.Api.Data;
+using RaceDay.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,13 @@ if (!builder.Environment.IsEnvironment("Testing"))
 }
 
 builder.Services.AddControllers();
+
+// Image uploads go to Azure Blob Storage. Only the API talks to Azure; the MVC app sends files to the API.
+// The test project supplies a fake storage in the "Testing" environment.
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddSingleton<IImageStorage, BlobImageStorage>();
+}
 
 // Session (server-side storage of UserID + Role)
 builder.Services.AddDistributedMemoryCache();

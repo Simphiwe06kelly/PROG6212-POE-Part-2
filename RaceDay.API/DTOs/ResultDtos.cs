@@ -44,7 +44,12 @@ public class ResultResponseDto
     public string ParticipantName { get; set; } = string.Empty;
     public int EventID { get; set; }
     public string EventName { get; set; } = string.Empty;
+    public DateTime EventDate { get; set; }
     public string CategoryName { get; set; } = string.Empty;
+
+    /// <summary>Number of participants with status Finished in the whole event (for "47th of 312").</summary>
+    public int TotalFinishers { get; set; }
+
     public TimeSpan? FinishTime { get; set; }
     public int? OverallPosition { get; set; }
     public int? CategoryPosition { get; set; }

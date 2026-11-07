@@ -4,13 +4,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RaceDay.Api.Data;
+using RaceDay.Api.Services;
 
 namespace RaceDay.Api.Tests.Helpers;
 
-/// <summary>Starts the real API with an in-memory database instead of SQL Server.</summary>
+/// <summary>Starts the real API with an in-memory database and a fake image storage (no SQL Server, no Azure).</summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbName = "RaceDayTests-" + Guid.NewGuid();
+
+    /// <summary>Records every "upload" so tests can check what the API sent to storage.</summary>
+    public FakeImageStorage Storage { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -18,6 +22,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             services.AddDbContext<RaceDayDbContext>(o => o.UseInMemoryDatabase(_dbName));
+            services.AddSingleton<IImageStorage>(Storage);
         });
     }
 

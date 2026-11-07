@@ -70,7 +70,8 @@ public class ResultsController : ControllerBase
         await _db.SaveChangesAsync();
 
         var saved = await Query().FirstAsync(r => r.ResultID == result.ResultID);
-        return StatusCode(StatusCodes.Status201Created, ToDto(saved));
+        var totals = await FinisherCountsAsync(new[] { saved });
+        return StatusCode(StatusCodes.Status201Created, ToDto(saved, totals));
     }
 
     /// <summary>Corrects a previously captured result.</summary>
@@ -105,7 +106,8 @@ public class ResultsController : ControllerBase
         result.Status = dto.Status;
         await _db.SaveChangesAsync();
 
-        return Ok(ToDto(result));
+        var totals = await FinisherCountsAsync(new[] { result });
+        return Ok(ToDto(result, totals));
     }
 
     /// <summary>Returns the full results list for an event, for public leaderboard display.</summary>
@@ -127,11 +129,15 @@ public class ResultsController : ControllerBase
             .ThenBy(r => r.OverallPosition)
             .ToListAsync();
 
-        return Ok(list.Select(ToDto));
+        var totals = await FinisherCountsAsync(list);
+        return Ok(list.Select(r => ToDto(r, totals)));
     }
 
     /// <summary>Returns the logged-in Participant's own personal result history.</summary>
-    /// <remarks>No request body.</remarks>
+    /// <remarks>
+    /// No request body. Each result includes the event name and date, the category, the finish time,
+    /// the overall position and totalFinishers (how many people finished the event), e.g. 47th of 312.
+    /// </remarks>
     /// <response code="200">Array of results.</response>
     /// <response code="401">Not logged in.</response>
     /// <response code="403">Not a Participant.</response>
@@ -147,7 +153,10 @@ public class ResultsController : ControllerBase
             .Where(r => r.Enrolment!.ParticipantID == userId)
             .ToListAsync();
 
-        return Ok(list.Select(ToDto));
+        var totals = await FinisherCountsAsync(list);
+        return Ok(list
+            .OrderByDescending(r => r.Enrolment!.Category!.Event!.EventDate)
+            .Select(r => ToDto(r, totals)));
     }
 
     private static string? Validate(string status, TimeSpan? finishTime)
@@ -165,17 +174,38 @@ public class ResultsController : ControllerBase
         .Include(r => r.Enrolment).ThenInclude(e => e!.Participant)
         .Include(r => r.Enrolment).ThenInclude(e => e!.Category).ThenInclude(c => c!.Event);
 
-    private static ResultResponseDto ToDto(Result r) => new()
+    /// <summary>For each event in the given results, how many results have status Finished.</summary>
+    private async Task<Dictionary<int, int>> FinisherCountsAsync(IEnumerable<Result> results)
     {
-        ResultID = r.ResultID,
-        EnrolmentID = r.EnrolmentID,
-        ParticipantName = r.Enrolment?.Participant?.FullName ?? string.Empty,
-        EventID = r.Enrolment?.Category?.EventID ?? 0,
-        EventName = r.Enrolment?.Category?.Event?.EventName ?? string.Empty,
-        CategoryName = r.Enrolment?.Category?.CategoryName ?? string.Empty,
-        FinishTime = r.FinishTime,
-        OverallPosition = r.OverallPosition,
-        CategoryPosition = r.CategoryPosition,
-        Status = r.Status
-    };
+        var eventIds = results
+            .Select(r => r.Enrolment?.Category?.EventID ?? 0)
+            .Distinct()
+            .ToList();
+
+        return await _db.Results
+            .Where(r => r.Status == "Finished" && eventIds.Contains(r.Enrolment!.Category!.EventID))
+            .GroupBy(r => r.Enrolment!.Category!.EventID)
+            .Select(g => new { EventId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.EventId, x => x.Count);
+    }
+
+    private static ResultResponseDto ToDto(Result r, Dictionary<int, int> totals)
+    {
+        var eventId = r.Enrolment?.Category?.EventID ?? 0;
+        return new ResultResponseDto
+        {
+            ResultID = r.ResultID,
+            EnrolmentID = r.EnrolmentID,
+            ParticipantName = r.Enrolment?.Participant?.FullName ?? string.Empty,
+            EventID = eventId,
+            EventName = r.Enrolment?.Category?.Event?.EventName ?? string.Empty,
+            EventDate = r.Enrolment?.Category?.Event?.EventDate ?? default,
+            CategoryName = r.Enrolment?.Category?.CategoryName ?? string.Empty,
+            TotalFinishers = totals.GetValueOrDefault(eventId),
+            FinishTime = r.FinishTime,
+            OverallPosition = r.OverallPosition,
+            CategoryPosition = r.CategoryPosition,
+            Status = r.Status
+        };
+    }
 }
