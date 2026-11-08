@@ -52,7 +52,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// While developing, the web app calls the API over plain http, so the redirect to https is skipped there
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseSession();
 app.UseAuthorization();
 app.MapControllers();
