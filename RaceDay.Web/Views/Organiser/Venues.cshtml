@@ -1,0 +1,78 @@
+@model VenuesViewModel
+@{
+    ViewData["Title"] = "Venues";
+    var provinces = new[] { "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "Northern Cape", "North West", "Western Cape" };
+}
+
+<div class="container my-4">
+    <div class="mb-4">
+        <h1 class="rd-heading mb-0">Venues</h1>
+        <p class="text-muted mb-0">The locations your events can be held at.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card rd-panel">
+                <div class="card-body p-4">
+                    <h2 class="rd-heading h5">Add a venue</h2>
+                    <form asp-action="CreateVenue" method="post" novalidate>
+                        <div class="mb-3">
+                            <label for="venue-name" class="form-label">Venue name</label>
+                            <input id="venue-name" name="VenueName" class="form-control" maxlength="150" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="venue-address" class="form-label">Address <span class="text-muted">(optional)</span></label>
+                            <input id="venue-address" name="Address" class="form-control" maxlength="200" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="venue-city" class="form-label">City</label>
+                            <input id="venue-city" name="City" class="form-control" maxlength="100" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="venue-province" class="form-label">Province</label>
+                            <select id="venue-province" name="Province" class="form-select" required>
+                                <option value="">Choose a province...</option>
+                                @foreach (var province in provinces)
+                                {
+                                    <option value="@province">@province</option>
+                                }
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-rd w-100"><i class="bi bi-plus-lg"></i> Add venue</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card rd-panel">
+                <div class="card-body">
+                    <h2 class="rd-heading h5">All venues</h2>
+                    @if (!Model.Venues.Any())
+                    {
+                        <p class="text-muted mb-0">No venues yet.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table rd-table align-middle mb-0">
+                                <thead><tr><th>Venue</th><th>Address</th><th>City</th><th>Province</th></tr></thead>
+                                <tbody>
+                                    @foreach (var venue in Model.Venues)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@venue.VenueName</td>
+                                            <td>@(string.IsNullOrWhiteSpace(venue.Address) ? "-" : venue.Address)</td>
+                                            <td>@venue.City</td>
+                                            <td>@venue.Province</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

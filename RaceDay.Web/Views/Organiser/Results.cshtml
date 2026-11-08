@@ -1,0 +1,89 @@
+@model ResultsEntryViewModel
+@{
+    var ev = Model.Event;
+    ViewData["Title"] = "Results - " + ev.EventName;
+    var isFuture = ev.EventDate.Date > DateTime.Today;
+}
+
+<div class="container my-4">
+    <a asp-action="Events" class="small"><i class="bi bi-arrow-left"></i> Back to my events</a>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mt-2 mb-3">
+        <div>
+            <h1 class="rd-heading mb-0">Results entry</h1>
+            <p class="text-muted mb-0">@ev.EventName &middot; @Format.ShortDate(ev.EventDate)</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Events" asp-action="Details" asp-route-id="@ev.EventID" class="btn btn-outline-dark">View public page</a>
+            <a asp-action="Enrolments" asp-route-id="@ev.EventID" class="btn btn-outline-dark">Enrolments</a>
+        </div>
+    </div>
+
+    @if (isFuture)
+    {
+        <div class="alert alert-info"><i class="bi bi-info-circle"></i> This event hasn't taken place yet. You can enter results once it has finished.</div>
+    }
+
+    <p class="text-muted small">
+        Enter the finish time as <strong>hh:mm:ss</strong> (for example 01:02:45) or <strong>mm:ss</strong> (for example 22:14), plus the overall and category positions.
+        Use <strong>DNF</strong> (did not finish) or <strong>DQ</strong> (disqualified) when there is no finish time. Only confirmed enrolments are listed.
+    </p>
+
+    @if (!Model.Rows.Any())
+    {
+        <div class="rd-empty">
+            <i class="bi bi-stopwatch"></i>
+            <h3>No confirmed enrolments</h3>
+            <p>Results can be captured once participants have entered this event.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card rd-panel">
+            <div class="table-responsive">
+                <table class="table rd-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Participant</th><th>Category</th><th style="width: 130px;">Finish time</th>
+                            <th style="width: 100px;">Overall pos.</th><th style="width: 100px;">Category pos.</th>
+                            <th style="width: 120px;">Status</th><th style="width: 110px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Rows)
+                        {
+                            var formId = "result-" + row.EnrolmentId;
+                            <tr>
+                                <td class="fw-semibold">
+                                    @row.ParticipantName
+                                    @if (row.HasResult)
+                                    {
+                                        <span class="ms-1 text-success" title="Result captured"><i class="bi bi-check-circle-fill"></i></span>
+                                    }
+                                </td>
+                                <td>@row.CategoryName</td>
+                                <td><input form="@formId" name="FinishTime" class="form-control form-control-sm" placeholder="hh:mm:ss" value="@row.FinishTime" autocomplete="off" /></td>
+                                <td><input form="@formId" name="OverallPosition" type="number" min="1" class="form-control form-control-sm" value="@row.OverallPosition" /></td>
+                                <td><input form="@formId" name="CategoryPosition" type="number" min="1" class="form-control form-control-sm" value="@row.CategoryPosition" /></td>
+                                <td>
+                                    <select form="@formId" name="Status" class="form-select form-select-sm">
+                                        <option value="Finished" selected="@(row.Status == "Finished")">Finished</option>
+                                        <option value="DNF" selected="@(row.Status == "DNF")">DNF</option>
+                                        <option value="DQ" selected="@(row.Status == "DQ")">DQ</option>
+                                    </select>
+                                </td>
+                                <td class="text-end">
+                                    <form id="@formId" asp-action="SaveResult" method="post">
+                                        <input type="hidden" name="EventId" value="@ev.EventID" />
+                                        <input type="hidden" name="EnrolmentId" value="@row.EnrolmentId" />
+                                        <input type="hidden" name="ResultId" value="@row.ResultId" />
+                                        <button type="submit" class="btn btn-rd btn-sm">@(row.HasResult ? "Update" : "Save")</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

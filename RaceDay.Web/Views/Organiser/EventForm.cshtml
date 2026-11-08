@@ -1,0 +1,88 @@
+@model EventFormViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? "Edit event" : "Create event";
+    var formAction = Model.IsEdit ? "EditEvent" : "CreateEvent";
+}
+
+<div class="container my-4">
+    <a asp-action="Events" class="small"><i class="bi bi-arrow-left"></i> Back to my events</a>
+    <h1 class="rd-heading mt-2 mb-4">@(Model.IsEdit ? "Edit event" : "Create a new event")</h1>
+
+    <div class="card rd-panel">
+        <div class="card-body p-4">
+            <form asp-controller="Organiser" asp-action="@formAction" asp-route-id="@Model.EventId" method="post" enctype="multipart/form-data" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                <div class="row g-4">
+                    <div class="col-lg-7">
+                        <div class="mb-3">
+                            <label asp-for="EventName" class="form-label"></label>
+                            <input asp-for="EventName" class="form-control" />
+                            <span asp-validation-for="EventName" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="5" placeholder="Tell participants what to expect: route, start time, facilities..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="EventDate" class="form-label"></label>
+                                <input asp-for="EventDate" type="date" class="form-control" />
+                                <span asp-validation-for="EventDate" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="EventType" class="form-label"></label>
+                                <select asp-for="EventType" class="form-select">
+                                    <option value="Run">Run</option>
+                                    <option value="Walk">Walk</option>
+                                    <option value="Cycle">Cycle</option>
+                                </select>
+                                <span asp-validation-for="EventType" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label asp-for="VenueId" class="form-label"></label>
+                            <select asp-for="VenueId" class="form-select">
+                                <option value="0">Choose a venue...</option>
+                                @foreach (var venue in Model.Venues)
+                                {
+                                    <option value="@venue.VenueID">@venue.VenueName - @venue.City, @venue.Province</option>
+                                }
+                            </select>
+                            <span asp-validation-for="VenueId" class="text-danger small"></span>
+                            <div class="form-text">Can't see the venue? <a asp-action="Venues">Add a new venue</a> first.</div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5">
+                        <label for="Banner" class="form-label">Banner image</label>
+                        <div class="rd-banner-preview @Format.TypeClass(Model.EventType)">
+                            @if (!string.IsNullOrEmpty(Model.CurrentBannerUrl))
+                            {
+                                <img id="bannerPreview" src="@Model.CurrentBannerUrl" alt="Current banner" />
+                            }
+                            else
+                            {
+                                <img id="bannerPreview" alt="Banner preview" class="d-none" />
+                                <i class="bi bi-image rd-banner-placeholder"></i>
+                            }
+                        </div>
+                        <input id="Banner" name="Banner" type="file" class="form-control mt-2"
+                               accept="image/png,image/jpeg,image/gif,image/webp" data-preview="#bannerPreview" />
+                        <div class="form-text">JPG, PNG, GIF or WEBP, up to 5 MB. @(Model.IsEdit ? "Leave empty to keep the current banner." : "Optional.")</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-rd btn-lg">@(Model.IsEdit ? "Save changes" : "Create event")</button>
+                    <a asp-action="Events" class="btn btn-outline-dark btn-lg">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
