@@ -14,7 +14,7 @@ Part 3 work is on the `part-3-mvc` branch.
 
 ## Video demonstration
 
-- **Part 3 (MVC app, Azure Blob Storage, Docker):** [Watch on YouTube](https://youtu.be/FG_PlwjMlJk)
+- **Part 3 (MVC app, Azure Blob Storage, Docker):** [Watch on YouTube(https://youtu.be/FG_PlwjMlJk) ]
 - Part 2 (API): https://youtu.be/YLs8fmIuQgY
 
 ## CI/CD status
