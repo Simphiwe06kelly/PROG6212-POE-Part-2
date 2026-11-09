@@ -21,6 +21,27 @@ public class EventRequestDto
     public int VenueId { get; set; }
 }
 
+public class VenueRequestDto
+{
+    [Required, MaxLength(150)]
+    public string VenueName { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string? Address { get; set; }
+
+    [Required, MaxLength(100)]
+    public string City { get; set; } = string.Empty;
+
+    [Required, MaxLength(100)]
+    public string Province { get; set; } = string.Empty;
+
+    [Range(-90, 90)]
+    public decimal? Latitude { get; set; }
+
+    [Range(-180, 180)]
+    public decimal? Longitude { get; set; }
+}
+
 public class VenueResponseDto
 {
     public int VenueID { get; set; }
@@ -40,6 +61,11 @@ public class EventResponseDto
     public string? Description { get; set; }
     public DateTime EventDate { get; set; }
     public string EventType { get; set; } = string.Empty;
+    public string? BannerUrl { get; set; }
+
+    /// <summary>Confirmed enrolments across all categories. Only filled in by GET /api/events/mine.</summary>
+    public int? EnrolmentCount { get; set; }
+
     public VenueResponseDto? Venue { get; set; }
     public List<CategoryResponseDto> Categories { get; set; } = new();
 }

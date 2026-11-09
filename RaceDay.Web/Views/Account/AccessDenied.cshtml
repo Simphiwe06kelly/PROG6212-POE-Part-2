@@ -1,0 +1,35 @@
+@inject UserSession CurrentUser
+@{
+    ViewData["Title"] = "Access denied";
+}
+
+<div class="container rd-center-page text-center">
+    <div class="rd-error-code"><i class="bi bi-shield-lock-fill"></i></div>
+    <h1 class="rd-heading">That area isn't for your account</h1>
+    <p class="lead text-muted">
+        @if (CurrentUser.IsOrganiser)
+        {
+            <text>This page is for Participants. As an Organiser you can manage your events from the dashboard.</text>
+        }
+        else if (CurrentUser.IsParticipant)
+        {
+            <text>This page is for Organisers. As a Participant you can browse and enter events.</text>
+        }
+        else
+        {
+            <text>Please log in with the right account to see this page.</text>
+        }
+    </p>
+    @if (CurrentUser.IsOrganiser)
+    {
+        <a asp-controller="Organiser" asp-action="Dashboard" class="btn btn-rd btn-lg">Go to my dashboard</a>
+    }
+    else if (CurrentUser.IsParticipant)
+    {
+        <a asp-controller="Home" asp-action="Index" class="btn btn-rd btn-lg">Browse events</a>
+    }
+    else
+    {
+        <a asp-controller="Account" asp-action="Login" class="btn btn-rd btn-lg">Log in</a>
+    }
+</div>

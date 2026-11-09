@@ -1,0 +1,161 @@
+@model EventDetailsViewModel
+@inject UserSession CurrentUser
+@{
+    var ev = Model.Event;
+    ViewData["Title"] = ev.EventName;
+    var isPast = ev.EventDate.Date < DateTime.Today;
+    var loginReturnUrl = Context.Request.Path + Context.Request.QueryString;
+    var confirmedStatus = "Confirmed";
+}
+
+<div class="rd-detail-banner @Format.TypeClass(ev.EventType)">
+    @if (!string.IsNullOrEmpty(ev.BannerUrl))
+    {
+        <img src="@ev.BannerUrl" alt="Banner for @ev.EventName" />
+    }
+    else
+    {
+        <i class="bi @Format.TypeIcon(ev.EventType) rd-detail-banner-icon"></i>
+    }
+    <div class="rd-detail-banner-overlay">
+        <div class="container">
+            <span class="rd-type-pill"><i class="bi @Format.TypeIcon(ev.EventType)"></i> @ev.EventType</span>
+            <h1 class="rd-detail-title">@ev.EventName</h1>
+            <div class="rd-detail-meta">
+                <span><i class="bi bi-calendar-event"></i> @Format.Date(ev.EventDate)</span>
+                @if (ev.Venue != null)
+                {
+                    <span><i class="bi bi-geo-alt-fill"></i> @ev.Venue.VenueName, @ev.Venue.City</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card rd-panel mb-4">
+                <div class="card-body">
+                    <h2 class="rd-heading h4">About this event</h2>
+                    <p class="mb-0">@(string.IsNullOrWhiteSpace(ev.Description) ? "The organiser hasn't added a description yet." : ev.Description)</p>
+                </div>
+            </div>
+
+            <div class="card rd-panel mb-4">
+                <div class="card-body">
+                    <h2 class="rd-heading h4">Race categories</h2>
+                    @if (!ev.Categories.Any())
+                    {
+                        <p class="text-muted mb-0">No categories have been added yet. Check back soon.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table rd-table align-middle mb-0">
+                                <thead>
+                                    <tr><th>Category</th><th>Distance</th><th>Entry fee</th><th>Places</th><th class="text-end"></th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var category in ev.Categories.OrderBy(c => c.DistanceKm))
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@category.CategoryName</td>
+                                            <td>@Format.Distance(category.DistanceKm)</td>
+                                            <td>@Format.Money(category.EntryFee)</td>
+                                            <td>@category.MaxParticipants</td>
+                                            <td class="text-end">
+                                                @if (isPast)
+                                                {
+                                                    <span class="text-muted small">Event finished</span>
+                                                }
+                                                else if (CurrentUser.IsParticipant)
+                                                {
+                                                    if (Model.EnrolledCategoryIds.Contains(category.CategoryID))
+                                                    {
+                                                        <partial name="_StatusBadge" model="confirmedStatus" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <form asp-controller="Participant" asp-action="Enrol" method="post" class="d-inline">
+                                                            <input type="hidden" name="categoryId" value="@category.CategoryID" />
+                                                            <input type="hidden" name="eventId" value="@ev.EventID" />
+                                                            <button type="submit" class="btn btn-rd btn-sm"><i class="bi bi-flag-fill"></i> Enter event</button>
+                                                        </form>
+                                                    }
+                                                }
+                                                else if (CurrentUser.IsOrganiser)
+                                                {
+                                                    <span class="text-muted small">Organisers can't enter events</span>
+                                                }
+                                                else
+                                                {
+                                                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@loginReturnUrl" class="btn btn-outline-dark btn-sm">Log in to enter</a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (Model.Results.Any())
+            {
+                <div class="card rd-panel mb-4">
+                    <div class="card-body">
+                        <h2 class="rd-heading h4">Results</h2>
+                        <div class="table-responsive">
+                            <table class="table rd-table align-middle mb-0">
+                                <thead>
+                                    <tr><th>Pos</th><th>Name</th><th>Category</th><th>Time</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var result in Model.Results)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@(result.OverallPosition?.ToString() ?? "-")</td>
+                                            <td>@result.ParticipantName</td>
+                                            <td>@result.CategoryName</td>
+                                            <td>@Format.Time(result.FinishTime)</td>
+                                            <td><partial name="_StatusBadge" model="result.Status" /></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card rd-panel">
+                <div class="card-body">
+                    <h2 class="rd-heading h5">Event details</h2>
+                    <dl class="rd-facts mb-0">
+                        <dt><i class="bi bi-calendar-event"></i> Date</dt>
+                        <dd>@Format.Date(ev.EventDate)</dd>
+                        <dt><i class="bi @Format.TypeIcon(ev.EventType)"></i> Type</dt>
+                        <dd>@ev.EventType</dd>
+                        @if (ev.Venue != null)
+                        {
+                            <dt><i class="bi bi-geo-alt-fill"></i> Location</dt>
+                            <dd>
+                                <span class="d-block">@ev.Venue.VenueName</span>
+                                @if (!string.IsNullOrWhiteSpace(ev.Venue.Address))
+                                {
+                                    <span class="d-block">@ev.Venue.Address</span>
+                                }
+                                <span class="d-block">@ev.Venue.City, @ev.Venue.Province</span>
+                            </dd>
+                        }
+                    </dl>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark w-100 mt-3"><i class="bi bi-arrow-left"></i> Back to events</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

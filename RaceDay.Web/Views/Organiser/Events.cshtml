@@ -1,0 +1,72 @@
+@model List<EventDto>
+@{
+    ViewData["Title"] = "My events";
+}
+
+<div class="container my-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div>
+            <h1 class="rd-heading mb-0">My events</h1>
+            <p class="text-muted mb-0">Create, edit and delete your events, then manage their categories, enrolments and results.</p>
+        </div>
+        <a asp-action="CreateEvent" class="btn btn-rd"><i class="bi bi-plus-circle-fill"></i> Create event</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="rd-empty">
+            <i class="bi bi-calendar-plus"></i>
+            <h3>You haven't created any events yet</h3>
+            <p>Create your first event, then add the race categories people can enter.</p>
+            <a asp-action="CreateEvent" class="btn btn-rd">Create an event</a>
+        </div>
+    }
+    else
+    {
+        <div class="card rd-panel">
+            <div class="table-responsive">
+                <table class="table rd-table align-middle mb-0">
+                    <thead>
+                        <tr><th></th><th>Event</th><th>Date</th><th>Location</th><th class="text-center">Enrolments</th><th class="text-end">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td style="width: 84px;">
+                                    <div class="rd-thumb @Format.TypeClass(item.EventType)">
+                                        @if (!string.IsNullOrEmpty(item.BannerUrl))
+                                        {
+                                            <img src="@item.BannerUrl" alt="" />
+                                        }
+                                        else
+                                        {
+                                            <i class="bi @Format.TypeIcon(item.EventType)"></i>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <a asp-controller="Events" asp-action="Details" asp-route-id="@item.EventID" class="fw-semibold">@item.EventName</a>
+                                    <div class="small text-muted">@item.EventType</div>
+                                </td>
+                                <td>@Format.ShortDate(item.EventDate)</td>
+                                <td>@(item.Venue != null ? item.Venue.VenueName + ", " + item.Venue.City : "-")</td>
+                                <td class="text-center"><span class="rd-count">@(item.EnrolmentCount ?? 0)</span></td>
+                                <td class="text-end text-nowrap">
+                                    <a asp-action="EditEvent" asp-route-id="@item.EventID" class="btn btn-outline-dark btn-sm" title="Edit"><i class="bi bi-pencil"></i> Edit</a>
+                                    <a asp-action="Categories" asp-route-id="@item.EventID" class="btn btn-outline-dark btn-sm">Categories</a>
+                                    <a asp-action="Enrolments" asp-route-id="@item.EventID" class="btn btn-outline-dark btn-sm">Enrolments</a>
+                                    <a asp-action="Results" asp-route-id="@item.EventID" class="btn btn-outline-dark btn-sm">Results</a>
+                                    <form asp-action="DeleteEvent" asp-route-id="@item.EventID" method="post" class="d-inline"
+                                          onsubmit="return confirm('Delete this event? This cannot be undone.');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,68 @@
+@model EnrolmentsViewModel
+@{
+    var ev = Model.Event;
+    ViewData["Title"] = "Enrolments - " + ev.EventName;
+    var confirmed = Model.Enrolments.Count(e => e.Status == "Confirmed");
+    var cancelled = Model.Enrolments.Count(e => e.Status == "Cancelled");
+}
+
+<div class="container my-4">
+    <a asp-action="Events" class="small"><i class="bi bi-arrow-left"></i> Back to my events</a>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mt-2 mb-4">
+        <div>
+            <h1 class="rd-heading mb-0">Enrolments</h1>
+            <p class="text-muted mb-0">@ev.EventName &middot; @Format.ShortDate(ev.EventDate)</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Categories" asp-route-id="@ev.EventID" class="btn btn-outline-dark">Categories</a>
+            <a asp-action="Results" asp-route-id="@ev.EventID" class="btn btn-rd"><i class="bi bi-stopwatch"></i> Enter results</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="rd-stat"><div class="rd-stat-number">@confirmed</div><div class="rd-stat-label">Confirmed</div></div></div>
+        <div class="col-6 col-md-3"><div class="rd-stat"><div class="rd-stat-number">@cancelled</div><div class="rd-stat-label">Cancelled</div></div></div>
+        @foreach (var category in ev.Categories.OrderBy(c => c.DistanceKm))
+        {
+            var count = Model.Enrolments.Count(e => e.CategoryID == category.CategoryID && e.Status == "Confirmed");
+            <div class="col-6 col-md-3">
+                <div class="rd-stat">
+                    <div class="rd-stat-number">@count<span class="rd-stat-of"> / @category.MaxParticipants</span></div>
+                    <div class="rd-stat-label">@category.CategoryName</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Enrolments.Any())
+    {
+        <div class="rd-empty">
+            <i class="bi bi-people"></i>
+            <h3>No enrolments yet</h3>
+            <p>Participants who enter this event will appear here with their category and status.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card rd-panel">
+            <div class="table-responsive">
+                <table class="table rd-table align-middle mb-0">
+                    <thead>
+                        <tr><th>Participant</th><th>Category</th><th>Entered on</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var enrolment in Model.Enrolments)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@enrolment.ParticipantName</td>
+                                <td>@enrolment.CategoryName</td>
+                                <td>@Format.DateTimeText(enrolment.EnrolmentDate)</td>
+                                <td><partial name="_StatusBadge" model="enrolment.Status" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

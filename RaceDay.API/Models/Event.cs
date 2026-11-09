@@ -21,6 +21,10 @@ namespace RaceDay.Api.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+        /// <summary>Public URL of the banner image in Azure Blob Storage (null until one is uploaded).</summary>
+        [MaxLength(500)]
+        public string? BannerUrl { get; set; }
+
         public User? Organiser { get; set; }
         public Venue? Venue { get; set; }
         public ICollection<Category> Categories { get; set; } = new List<Category>();

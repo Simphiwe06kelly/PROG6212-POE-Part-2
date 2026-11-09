@@ -1,0 +1,25 @@
+@model string
+@{
+    // Colour coding used everywhere: green = good, amber = waiting / unfinished, red = cancelled / disqualified
+    var css = Model switch
+    {
+        "Confirmed" => "rd-badge-confirmed",
+        "Finished" => "rd-badge-confirmed",
+        "Pending" => "rd-badge-pending",
+        "DNF" => "rd-badge-pending",
+        "Cancelled" => "rd-badge-cancelled",
+        "DQ" => "rd-badge-cancelled",
+        _ => "rd-badge-neutral"
+    };
+    var icon = Model switch
+    {
+        "Confirmed" => "bi-check-circle-fill",
+        "Finished" => "bi-flag-fill",
+        "Pending" => "bi-hourglass-split",
+        "DNF" => "bi-exclamation-circle-fill",
+        "Cancelled" => "bi-x-circle-fill",
+        "DQ" => "bi-slash-circle-fill",
+        _ => "bi-circle"
+    };
+}
+<span class="rd-badge @css"><i class="bi @icon"></i> @Model</span>

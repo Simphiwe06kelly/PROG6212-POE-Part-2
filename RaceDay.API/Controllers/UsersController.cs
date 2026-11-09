@@ -4,6 +4,7 @@ using RaceDay.Api.Attributes;
 using RaceDay.Api.Data;
 using RaceDay.Api.DTOs;
 using RaceDay.Api.Helpers;
+using RaceDay.Api.Services;
 
 namespace RaceDay.Api.Controllers;
 
@@ -12,15 +13,19 @@ namespace RaceDay.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly RaceDayDbContext _db;
+    private readonly IImageStorage _images;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(RaceDayDbContext db)
+    public UsersController(RaceDayDbContext db, IImageStorage images, ILogger<UsersController> logger)
     {
         _db = db;
+        _images = images;
+        _logger = logger;
     }
 
     /// <summary>Returns the profile of the currently logged-in user.</summary>
     /// <remarks>Any logged-in user (Organiser or Participant). No request body.</remarks>
-    /// <response code="200">The user's profile (no password).</response>
+    /// <response code="200">The user's profile (no password), including profilePictureUrl.</response>
     /// <response code="401">Not logged in.</response>
     [HttpGet("me")]
     [RequireRole]
@@ -64,6 +69,50 @@ public class UsersController : ControllerBase
         return Ok(ToDto(user));
     }
 
+    /// <summary>Uploads (or replaces) the logged-in user's profile picture.</summary>
+    /// <remarks>
+    /// Any logged-in user. Send the image as multipart/form-data in a field called "file".
+    /// JPG, PNG, GIF or WEBP, up to 5 MB. The API stores the image in Azure Blob Storage and saves its URL
+    /// on the user as profilePictureUrl.
+    /// </remarks>
+    /// <param name="file">The image file.</param>
+    /// <response code="200">The updated profile, including profilePictureUrl.</response>
+    /// <response code="400">No file, wrong file type, or file larger than 5 MB.</response>
+    /// <response code="401">Not logged in.</response>
+    /// <response code="503">Image storage is unavailable.</response>
+    [HttpPost("me/picture")]
+    [RequireRole]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(UserResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> UploadPicture(IFormFile file)
+    {
+        var userId = HttpContext.Session.GetUserId()!.Value;
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return Unauthorized(new { message = "User no longer exists." });
+
+        var (image, error) = await ImageFileValidator.InspectAsync(file);
+        if (image == null) return BadRequest(new { message = error });
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            user.ProfilePictureUrl = await _images.UploadAsync(stream, image.ContentType,
+                $"profiles/{userId}/{Guid.NewGuid():N}{image.Extension}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Profile picture upload failed for user {UserId}", userId);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = "Image storage is unavailable. Please try again later." });
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(ToDto(user));
+    }
+
     /// <summary>Lists all registered users (administrative oversight).</summary>
     /// <remarks>Organisers only. No request body.</remarks>
     /// <response code="200">Array of users (no passwords).</response>
@@ -84,7 +133,8 @@ public class UsersController : ControllerBase
                 FullName = u.FullName,
                 Email = u.Email,
                 Role = u.Role,
-                CreatedAt = u.CreatedAt
+                CreatedAt = u.CreatedAt,
+                ProfilePictureUrl = u.ProfilePictureUrl
             })
             .ToListAsync();
 
@@ -97,6 +147,7 @@ public class UsersController : ControllerBase
         FullName = u.FullName,
         Email = u.Email,
         Role = u.Role,
-        CreatedAt = u.CreatedAt
+        CreatedAt = u.CreatedAt,
+        ProfilePictureUrl = u.ProfilePictureUrl
     };
 }

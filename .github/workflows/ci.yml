@@ -1,0 +1,75 @@
+name: RaceDay CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build API + web app and run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Validate repository structure
+        run: |
+          test -f README.md
+          test -f RaceDay.API.slnx
+          test -f docker-compose.yml
+          test -f RaceDay.API/RaceDay.Api.csproj
+          test -d RaceDay.API/Controllers
+          test -d RaceDay.API/Models
+          test -d RaceDay.API/Migrations
+          test -d RaceDay.API/Services
+          test -f RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
+          test -f RaceDay.Web/RaceDay.Web.csproj
+          test -f RaceDay.Web/Program.cs
+          test -f RaceDay.Web/Dockerfile
+          test -d RaceDay.Web/Controllers
+          test -d RaceDay.Web/Views
+          test -d RaceDay.Web/wwwroot
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: |
+          dotnet restore RaceDay.Api.Tests/RaceDay.Api.Tests.csproj
+          dotnet restore RaceDay.Web/RaceDay.Web.csproj
+
+      - name: Build API (through the test project)
+        run: dotnet build RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-restore --configuration Release
+
+      - name: Build MVC web app
+        run: dotnet build RaceDay.Web/RaceDay.Web.csproj --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test RaceDay.Api.Tests/RaceDay.Api.Tests.csproj --no-build --configuration Release --verbosity normal
+
+  docker:
+    name: Build the Docker image and start it
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Build the web app image
+        run: docker build -t raceday-web ./RaceDay.Web
+
+      - name: Start the container and check it serves pages
+        run: |
+          docker run -d --name raceday-web -p 8080:8080 raceday-web
+          for i in $(seq 1 20); do
+            if curl -fsS -o /dev/null http://localhost:8080/; then
+              echo "The container is serving pages."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "The container did not respond. Its log:"
+          docker logs raceday-web
+          exit 1

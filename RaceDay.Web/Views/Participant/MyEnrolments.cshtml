@@ -1,0 +1,60 @@
+@model MyEnrolmentsViewModel
+@{
+    ViewData["Title"] = "My enrolments";
+    var today = DateTime.Today;
+}
+
+<div class="container my-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div>
+            <h1 class="rd-heading mb-0">My enrolments</h1>
+            <p class="text-muted mb-0">Every event you have entered, and where each entry stands.</p>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-rd"><i class="bi bi-search"></i> Find more events</a>
+    </div>
+
+    @if (!Model.Enrolments.Any())
+    {
+        <div class="rd-empty">
+            <i class="bi bi-ticket-perforated"></i>
+            <h3>You haven't entered any events yet</h3>
+            <p>Browse upcoming events and pick a category to get started.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-rd">Browse events</a>
+        </div>
+    }
+    else
+    {
+        <div class="card rd-panel">
+            <div class="table-responsive">
+                <table class="table rd-table align-middle mb-0">
+                    <thead>
+                        <tr><th>Event</th><th>Date</th><th>Category</th><th>Entered on</th><th>Status</th><th class="text-end"></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var enrolment in Model.Enrolments)
+                        {
+                            <tr>
+                                <td class="fw-semibold">
+                                    <a asp-controller="Events" asp-action="Details" asp-route-id="@enrolment.EventID">@enrolment.EventName</a>
+                                </td>
+                                <td>@Format.ShortDate(enrolment.EventDate)</td>
+                                <td>@enrolment.CategoryName</td>
+                                <td>@Format.ShortDate(enrolment.EnrolmentDate)</td>
+                                <td><partial name="_StatusBadge" model="enrolment.Status" /></td>
+                                <td class="text-end">
+                                    @if (enrolment.Status == "Confirmed" && enrolment.EventDate.Date >= today)
+                                    {
+                                        <form asp-controller="Participant" asp-action="Cancel" asp-route-id="@enrolment.EnrolmentID" method="post"
+                                              class="d-inline" onsubmit="return confirm('Cancel this entry?');">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Cancel entry</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
