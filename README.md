@@ -394,4 +394,4 @@ There are **100+ unit tests** (see Test Explorer for the exact count), all passi
 
 ## Use of AI tools
 
-> **Edit this section so it is true for you, and check your institution's rules on AI assistance.** If AI tools helped with this work, state which tools, what they helped with, and confirm that you reviewed, tested and understand the code. Example: *"I used an AI assistant (Claude) to help plan and write parts of the Part 3 code. I reviewed, tested and can explain all of the code in this repository."*
+> **I used an AI assistant (Claude) to help plan and write parts of the Part 3 code. I reviewed and tested all of the code in this repository*
