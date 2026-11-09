@@ -21,7 +21,8 @@ Part 3 work is on the `part-3-mvc` branch.
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push. It checks the repository structure, builds the API and the MVC web app, runs all unit tests, then builds the Docker image and starts the container.
 
-![Green GitHub Actions build](docs/ci-green.png)
+
+![Green GitHub Actions build] <img width="954" height="363" alt="Screenshot 2026-11-09 161900" src="https://github.com/user-attachments/assets/a856924a-3279-407b-8746-91956d8321b7" />
 
 ## Table of contents
 
