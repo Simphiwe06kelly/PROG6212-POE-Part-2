@@ -1,0 +1,13 @@
+# Keep the build context small and stop local build output leaking into the image
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.suo
+**/.git
+**/.gitignore
+**/.env
+**/secrets.json
+Dockerfile
+.dockerignore

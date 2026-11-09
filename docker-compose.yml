@@ -1,0 +1,23 @@
+# Starts the RaceDay web app in a container with ONE command:
+#
+#     docker compose up --build
+#
+# Then open http://localhost:8080
+#
+# The RaceDay API must already be running on this computer (for example from Visual Studio, or with
+# "dotnet run --project RaceDay.API --launch-profile http") so it is reachable on http://localhost:5286.
+services:
+  web:
+    build:
+      context: ./RaceDay.Web
+    image: raceday-web
+    container_name: raceday-web
+    ports:
+      - "8080:8080"
+    environment:
+      # host.docker.internal means "the computer running Docker"
+      ApiSettings__BaseUrl: "http://host.docker.internal:5286/"
+    extra_hosts:
+      # Makes host.docker.internal work on Linux too (Docker Desktop on Windows/Mac has it already)
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
